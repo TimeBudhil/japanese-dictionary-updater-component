@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Decides which entries a changed upstream file has dropped, so the spoke can
- * retire them (see {@code docs/adr/0001-retire-in-postgres-delete-from-search.md}).
+ * retire them (rules: {@code docs/CONTEXT.md}, "Retirement").
  * Spokes call it only after a fully successful changed-file run, never after a
  * failed run or a hash-skip.
  *

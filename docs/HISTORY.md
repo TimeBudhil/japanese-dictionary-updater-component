@@ -1,10 +1,22 @@
-# updaterComponent — Next Steps
+# Updater — History
+
+Archive. Not read by default (see `CLAUDE.md`). Newest entry first; entries are never edited.
+Every decision id (`U<n>`, `X<n>`) that left `docs/PLAN.md` keeps its full text here.
+
+## 2026-11-14 — Docs restructure (U10)
+
+Archived word for word at commit `6ec308d`: the old `NEXT_STEPS.md` (done sections 2, 3, 6 and
+the decisions U1–U9), both ADRs (their rules now live in `docs/CONTEXT.md`, their decisions in
+`docs/PLAN.md` as U11 and U12), and the cross-repo task text from the dictionary service.
+
+### NEXT_STEPS.md as of 2026-11-14
+
 
 All four spokes (JMdict, JMnedict, Kanji, Tatoeba) are implemented, covered by unit and
 Testcontainers integration tests, and verified end-to-end on real upstream data (2026-09-27).
 Its history is in this repo's git log.
 
-## 1. Go live on AWS Cognito
+#### 1. Go live on AWS Cognito
 
 The code is ready (`hub/CognitoJwtDecoderConfig`, `hub/SecurityConfig`); it needs a real user pool.
 
@@ -18,7 +30,7 @@ The code is ready (`hub/CognitoJwtDecoderConfig`, `hub/SecurityConfig`); it need
 - [ ] Once no environment uses the dev token, delete `hub/StubJwtDecoderConfig` and the
       `updater.admin.dev-token` / `stub-auth` properties.
 
-## 2. Schema migrations: done (2026-10-06)
+#### 2. Schema migrations: done (2026-10-06)
 
 Flyway owns the schema (`src/main/resources/db/migration`); Hibernate runs with
 `ddl-auto=validate`, so an entity/schema mismatch fails startup. `V1__baseline.sql` is the
@@ -30,7 +42,7 @@ Hibernate-generated schema as of 2026-10-06 (verified identical via `pg_dump` di
   A DB whose schema differs from V1 (anything created before 2026-09-27) must be reset:
   `docker compose down -v` (from the repo root; this deletes the data volumes).
 
-## 3. Entries removed upstream: done (2026-10-06)
+#### 3. Entries removed upstream: done (2026-10-06)
 
 An entry missing from a changed upstream file is deleted from Elasticsearch and **retired** in
 Postgres (`retired_at` set, row kept). It is un-retired and re-indexed if it comes back. Kanji
@@ -54,7 +66,7 @@ guard `updater.<feedId>.retire-guard` defaults to 0.98. Policy and reasons:
 - [ ] Not done: radicals that RADKFILE drops stay in `radical` (only kanji links are cleared).
       Purging long-retired, unreferenced rows is a possible later cleanup job.
 
-## 4. Run time of changed-file runs
+#### 4. Run time of changed-file runs
 
 V3 indexes the foreign-key columns. Without the indexes, updating existing JMdict entries
 full-scanned the child tables for every entry (~25 entries/s, ~2.5 h). With them, a changed
@@ -62,12 +74,12 @@ JMdict file takes ~10 min and JMnedict ~4 min (2026-10-06). The rest of the time
 statement round trips: Hibernate deletes and inserts child rows one at a time, and `IDENTITY`
 ids block insert batching. If run time matters, switch to `SEQUENCE` ids / bulk upserts.
 
-## 5. Jreibun: not ingested
+#### 5. Jreibun: not ingested
 
 Out of scope: it isn't openly licensed or publicly downloadable. See
 `docs/adr/0002-open-data-sources-only-no-jreibun.md`.
 
-## 6. Profiles and local Docker stack: done (2026-10-23)
+#### 6. Profiles and local Docker stack: done (2026-10-23)
 
 Spring profiles `local` (IDE), `docker` (compose service) and `prod` (AWS). There is no
 default profile, so a start without one fails fast. `docker-compose.yml` runs
@@ -80,7 +92,7 @@ vocab entries), `dictionary_reader` can read and gets "permission denied" on wri
 endpoint is UP, the admin API returns 401 without a token, and the image without a
 profile fails on the missing datasource URL.
 
-## 7. AWS deployment notes (not started)
+#### 7. AWS deployment notes (not started)
 
 The `prod` profile is ready; the infrastructure is not. Decisions made so far:
 RDS Postgres 16 and **Elastic Cloud** (ES 9.x; AWS OpenSearch doesn't work with the 9.x
@@ -108,7 +120,7 @@ client), secrets as plain env vars (`docs/configuration.md`), Cognito for the ad
 - [ ] Observability goes to its **own** Elasticsearch/Kibana, never the search cluster
       (see 8).
 
-## 8. Open items from the 2026-10-23 session
+#### 8. Open items from the 2026-10-23 session
 
 - [ ] **ELK monitoring, tracing and logging**: a separate design session. Decided: a
       separate Elasticsearch + Kibana for observability, never the search ES. Open:
@@ -128,7 +140,7 @@ client), secrets as plain env vars (`docs/configuration.md`), Cognito for the ad
 - [ ] **Cleanup**: remove `hibernate.dialect` (Hibernate warns HHH90000025: it's
       detected automatically); Spring Boot 4.1.2 is out (on 4.1.1).
 
-## 9. Decisions (2026-11-14, history restored + Docker run)
+#### 9. Decisions (2026-11-14, history restored + Docker run)
 
 Made while testing this repo with the dictionary service (`~/repos/japanese-dictionary-services`).
 The same decisions are in that repo's `docs/PLAN.md` (numbers in brackets). Rule [D70]: a
@@ -149,3 +161,96 @@ decision that changes this repo's code, schema, feeds or compose file is logged 
 Superseded by the port (were today's fixes on the stale copy): the nested-repository flag
 (the ported code uses a top-level `VocabEsRepository`), the `text` gloss / `text[]` stroke
 paths (V1 already has them), and the ES version bump in the old compose file.
+
+### docs/adr/0001-retire-in-postgres-delete-from-search.md
+
+
+Status: accepted (2026-10-06)
+
+When an entry's key disappears from a changed upstream file, the updater deletes its
+Elasticsearch document and **retires** its Postgres row (`retired_at` is set, and the row and
+its children are kept). Changed entries are updated in place under the same key, never deleted.
+Search must stop showing removed entries, such as a JMdict duplicate that was merged away or a
+deleted Tatoeba sentence. But the planned API backend will store entry ids in user lists, so the
+rows must keep resolving. Retiring also makes a bad run reversible, and the row shows why an
+entry disappeared.
+
+#### Rules
+
+- **When:** only at the end of a fully successful changed-file run. A failed or partial run, or a
+  hash-skip, retires nothing.
+- **Guard:** `updater.<feedId>.retire-guard` (default `0.98`) is the smallest fraction of active
+  entries a run may leave active. A file below it retires nothing and logs a WARN, while its
+  upserts still apply. A truncated gzip already fails the parse, so the guard only has to catch
+  valid-but-wrong files (a partial mirror, a parser bug). Real removals are expected to be far
+  under 1% per release. A false block costs little, because stale entries stay searchable until
+  someone checks. A loose guard costs a lot: 90% on JMdict would allow ~21,800 removals in one run.
+  Every changed-file run logs the would-retire count so the guards can be tuned from data.
+  A blocked file is still marked processed, so its removals are re-checked only when upstream
+  changes again. Lowering the guard applies from the next changed file.
+  For a Kanji sub-source, the guard counts the characters that sub-source has data on, not all
+  active kanji rows.
+- **Un-retire:** a retired key that comes back is upserted with `retired_at` cleared and
+  re-indexed.
+- **Order:** Elasticsearch deletes go before the Postgres update. If the update fails, the rows
+  are still active, so the next run deletes and retires them again.
+- **Kanji:** KanjiDic2, RADKFILE and KanjiVG each own different fields of one row. A sub-source
+  that no longer lists a character hard-deletes only its own data (a correction, not a removal).
+  The row is retired once no sub-source has data on it.
+- **Scope:** a spoke only retires rows of its own source (Tatoeba: `source = 'tanaka-corpus'`).
+
+#### Consequences
+
+- Anything that reads these tables (the future API backend) **must filter
+  `retired_at IS NULL`**. Put that in one place there, as a view or a default repository filter,
+  so it is hard to forget.
+- Retired rows accumulate. Purging long-retired rows that nothing references is a possible later
+  cleanup job, not done now.
+
+#### Considered options
+
+- **Hard delete everywhere:** this breaks stored ids and cannot be undone after a bad file.
+- **Keep everything (the previous behaviour):** removed entries stay searchable forever.
+
+### docs/adr/0002-open-data-sources-only-no-jreibun.md
+
+
+Status: accepted (2026-10-06)
+
+The updater only ingests sources with an open licence and a stable public download URL that a
+scheduled job can fetch. Jreibun is listed next to Tatoeba under "example sentences" in
+`written_reports/Architectures/Container_Diagram_V03.JPG`, but it is out of scope.
+Version 1.0 (2026-09-10, 18,877 sentences) is distributed only through GSK: you apply by email
+with a signed pledge form, pay ¥33,000 unless you are a GSK member, and receive the files by
+manual file share. Use is limited to education, research and non-profit purposes. JMdict's own
+examples file (`JMdict_e_examp.gz`, checked 2026-10-06) contains only Tatoeba sentences.
+
+Sources: the Jreibun project page
+(https://www.tufs.ac.jp/ts/personal/SUZUKI_Tomomi/jreibun/index-jreibun.html) and the GSK
+catalogue entry (https://www.gsk.or.jp/catalog/gsk2026-a/).
+
+#### Consequences
+
+`example_sentence` stays keyed by the Tatoeba Japanese sentence id. The `(source, id)` re-key
+that a second sentence source would need is not done. Do it only when an open second source
+is added.
+
+### Cross-repo tasks X1–X11, as tracked in the dictionary service until 2026-11-14
+
+
+Tracked here so they're not forgotten. Do them in the updater repo.
+
+| # | Task | Needed by |
+|---|---|---|
+| X1 | ✅ _Done in the updater (Flyway V1–V3 from its restored history, V4 for X8; ported 2026-11-14, D73). This repo reuses the migrations (D74)._ Replace `ddl-auto=update` with **Flyway** migrations. The updater owns the schema (D3) | Phase 0 (DDL reuse), schema stability |
+| X2 | Add **kuromoji + ICU** multi-field mappings to `vocab` and `example-sentence` (keyword exact / kuromoji tokenized / edge-ngram prefix). Use a custom ES image with the plugins (D14) | Phases 1, 4, 7 (match quality) |
+| X3 | Parse and store JMdict `<field>` (subject) and `<dial>` (dialect) tags on `Sense` (same pattern as `miscTags`), then re-import | Phase 8 |
+| X4 | ✅ _Done: the ported `NEXT_STEPS.md` is current (D73)._ Update stale `NEXT_STEPS.md` (Kanji + JMnedict spokes are implemented) | housekeeping |
+| X5 | (If needed) GIN / `pg_trgm` indexes on `name_entry` arrays via Flyway | Phase 3 |
+| X6 | (Later) word-level JLPT source ingestion, once O3 is decided | Phase 8 |
+| X7 | ✅ _Done in the updater (V1: sentence text is `text`; ported, D73). This repo's schema, seed and role script no longer handle large objects._ Map `example_sentence.japanese/english/index_words` to `text`, not `@Lob` (which makes Postgres `oid` large objects), e.g. `@JdbcTypeCode(SqlTypes.LONGVARCHAR)`. Do it as a Flyway migration (X1). Then update this repo's `01-schema.sql` and drop the per-LO grants. Reason: large objects need per-object `GRANT`s (no default privileges in Postgres 16), so the read-only role can't read full-load sentences | Phase 4 |
+| X8 | _Shipped as updater Flyway **V4** (U3/U4): on an existing DB it drops the unordered rows and forces a JMdict re-import. This repo's `seed/schema.sql` includes V4._ ✅ _Done 2026-11-14 for `sense_gloss`/`sense_pos`/`sense_misc` (`@OrderColumn` in the updater's `Sense`; this repo's `01-schema.sql` regenerated). Still open: X3's tables when they exist, and checking the other spokes' arrays._ **Keep upstream order** for ordered lists. The updater loses it today: `Sense` glosses / POS / misc are `@ElementCollection` lists with no order column, so the order of the JMdict XML (most important gloss first) is not stored. Add `@OrderColumn` (e.g. `gloss_order`) to `sense_gloss`, `sense_pos`, `sense_misc` (and X3's `<field>`/`<dial>` tables) via Flyway (X1), then re-import. **This repo already expects these exact column names** (`gloss_order`, `pos_order`, `misc_order`, 0-based, PK `(sense_id, <x>_order)`); until X8 lands, `validate` fails against a real updater DB. Also check the other spokes for lists whose source order matters (e.g. `name_entry` arrays, kanji `meanings[]`). Readings and senses are fine: identity ids follow insert order. Then update this repo's `01-schema.sql` and add the matching `@OrderColumn` in `vocabulary/models/Sense` | Phase 1 (gloss display order) |
+| X9 | _Superseded 2026-11-14 by the port (D73): the ported code already had its own fixes (top-level `VocabEsRepository`, `text` columns in V1, ES 9). Kept as a record of what the Docker run found._ ✅ _Done 2026-11-14_ (found by the Docker run). (a) The app could not start: the ES repositories are nested interfaces inside the `*IndexWriter` facades, which Spring Data skips by default, so the fix is `@EnableElasticsearchRepositories(considerNestedRepositories = true)`. (b) The compose ES was 8.15.3, but Boot 4.1's client is 9.x, and ES 8 rejects its `compatible-with=9` header (400), so ES is now 9.4.8 (D57). (c) Full loads failed on `varchar(255)`: one JMdict gloss is 354 chars and KanjiVG stroke paths are up to 377, so `sense_gloss.gloss` is now `text` and `kanji.stroke_paths` is `text[]` (`length = Length.LONG32`). An existing updater DB needs `ALTER ... TYPE text` (no Flyway yet, X1) | Phase 0/1 (full load) |
+| X10 | _Note (2026-11-14): the updater asserts the expansion on purpose (`JmdictModuleIT`, "DTD entity expanded to its description", U7), and this repo's fixtures now use the expanded text (D77). Changing it is a design decision in both repos._ Store JMdict **entity codes** for POS/misc (`n`, `v1`, `exp`, `sl`), not the expanded DTD text (`noun (common) (futsuumeishi)`). The parser resolves the inline DTD entities today. Codes are short, stable, and what Phase 7 tag search and Phase 8 lists (`exp`, slang) want; the display text can be a lookup table. Needs a re-import | Phases 7, 8 |
+| X11 | _Mostly resolved by the port: the GitHub API call is gone (KanjiVG's latest release comes from the `releases/latest` redirect), and failures now carry status, rate-limit headers and body (D69, U6). Pinning `updater.kanjivg.url` in production is still an option._ (Optional) KanjiVG's "latest release" lookup calls the GitHub API without a token, so it can get **HTTP 403** (rate limit; seen once 2026-11-14, fine on retry). Pin `updater.kanjivg.url` or send a token in production | Reliability |
+

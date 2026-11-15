@@ -12,7 +12,7 @@ datasource URL or auth settings. Starting without a profile fails fast
 | `prod` | AWS (not deployed yet) | env vars (RDS + Elastic Cloud) | Cognito | no |
 
 `local` and `docker` are standalone, so their dev settings are duplicated. Change
-both files together. A config server may replace this later (see NEXT_STEPS.md).
+both files together. A config server may replace this later (see `docs/PLAN.md`).
 
 Integration tests activate `local` (`support/IntegrationTest`); Testcontainers'
 `@ServiceConnection` replaces its localhost URLs.
