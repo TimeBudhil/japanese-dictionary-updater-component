@@ -8,7 +8,7 @@ datasource URL or auth settings. Starting without a profile fails fast
 | Profile | Where the updater runs | Databases | Admin auth | Runs feeds on start-up |
 |---|---|---|---|---|
 | `local` | On the host: IDE or `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` | compose DBs on `localhost:5432` / `localhost:9200` | stub: `Bearer dev-token` | no |
-| `docker` | As the `updater` service of the root `docker-compose.yml` | compose service names `postgres` / `elasticsearch` | stub: `Bearer dev-token` | yes |
+| `docker` | As the `updater` service of `docker-compose.yml` | compose service names `postgres` / `elasticsearch` | stub: `Bearer dev-token` | yes |
 | `prod` | AWS (not deployed yet) | env vars (RDS + Elastic Cloud) | Cognito | no |
 
 `local` and `docker` are standalone, so their dev settings are duplicated. Change
@@ -61,14 +61,14 @@ instead of overlapping. The cron run uses the scheduler thread.
 - `GET /admin/updates`, `POST /admin/updates[/{id}]`: Bearer token plus group (see
   `hub/SecurityConfig`).
 
-## Local logins (root `docker-compose.yml`)
+## Local logins (`docker-compose.yml`)
 
 | What | Where | Login |
 |---|---|---|
-| Postgres, read-only (for other apps) | `localhost:5432/updater` | `api_reader` / `api_reader` |
+| Postgres, read-only (for other apps) | `localhost:5432/updater` | `dictionary_reader` / `dictionary_reader` |
 | Postgres, owner (the updater) | `localhost:5432/updater` | `updater` / `updater` |
 | Elasticsearch | `http://localhost:9200` | none (security off) |
 | Updater admin API | `http://localhost:8081` | `Authorization: Bearer dev-token` |
 
-`api_reader` is created by the `db-init` service (`docker/postgres/api_reader.sql`). It
+`dictionary_reader` is created by the `db-init` service (`docker/postgres/dictionary_reader.sql`). It
 has `SELECT` on every table, including tables Flyway adds later (default privileges).

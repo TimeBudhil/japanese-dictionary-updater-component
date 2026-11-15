@@ -1,2 +1,6 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+
+# Files read inside Linux containers keep LF on a Windows checkout.
+*.sh text eol=lf
+docker/** text eol=lf

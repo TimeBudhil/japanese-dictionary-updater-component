@@ -2,8 +2,7 @@
 
 All four spokes (JMdict, JMnedict, Kanji, Tatoeba) are implemented, covered by unit and
 Testcontainers integration tests, and verified end-to-end on real upstream data (2026-09-27).
-Full history of that work, build/run commands and hard-won gotchas:
-`../written_reports/Archived/Claude/NEXT_STEPS.md`.
+Its history is in this repo's git log.
 
 ## 1. Go live on AWS Cognito
 
@@ -71,13 +70,13 @@ Out of scope: it isn't openly licensed or publicly downloadable. See
 ## 6. Profiles and local Docker stack: done (2026-10-23)
 
 Spring profiles `local` (IDE), `docker` (compose service) and `prod` (AWS). There is no
-default profile, so a start without one fails fast. The root `docker-compose.yml` runs
-Postgres, Elasticsearch, `db-init` (creates the read-only `api_reader` login) and the
+default profile, so a start without one fails fast. `docker-compose.yml` runs
+Postgres, Elasticsearch, `db-init` (creates the read-only `dictionary_reader` login) and the
 updater, which runs every feed on start-up. Commands: root `README.md`. Profiles,
 properties, env vars and logins: `docs/configuration.md`.
 
 Verified 2026-10-23: `docker compose up --build` reused the existing data (218,867 active
-vocab entries), `api_reader` can read and gets "permission denied" on writes, the health
+vocab entries), `dictionary_reader` can read and gets "permission denied" on writes, the health
 endpoint is UP, the admin API returns 401 without a token, and the image without a
 profile fails on the missing datasource URL.
 
@@ -87,7 +86,7 @@ The `prod` profile is ready; the infrastructure is not. Decisions made so far:
 RDS Postgres 16 and **Elastic Cloud** (ES 9.x; AWS OpenSearch doesn't work with the 9.x
 client), secrets as plain env vars (`docs/configuration.md`), Cognito for the admin API.
 
-- [ ] **Image**: build `updaterComponent/Dockerfile` and push it to ECR. The build skips
+- [ ] **Image**: build `Dockerfile` and push it to ECR. The build skips
       tests, so CI must run `./mvnw verify` (Testcontainers needs Docker) before it.
 - [ ] **Runtime**: e.g. ECS Fargate. Run **exactly one** task: the cron is in-process,
       so two tasks would update every feed twice at once. More tasks would need a lock
@@ -103,7 +102,7 @@ client), secrets as plain env vars (`docs/configuration.md`), Cognito for the ad
       ALB/VPN). Health check: `GET /actuator/health`.
 - [ ] **RDS**: the datasource user owns the schema (Flyway runs as it on start-up).
       `db-init` is local only. Create the API backend's read-only role in RDS through
-      infra (same grants as `docker/postgres/api_reader.sql`, with a real password).
+      infra (same grants as `docker/postgres/dictionary_reader.sql`, with a real password).
 - [ ] **Elastic Cloud**: one API key for the updater (write `vocab`, `example_sentence`)
       and a separate read-only key for the API backend.
 - [ ] Observability goes to its **own** Elasticsearch/Kibana, never the search cluster
@@ -122,11 +121,31 @@ client), secrets as plain env vars (`docs/configuration.md`), Cognito for the ad
       separate observability ES.
 - [ ] **Overlapping runs**: admin-API and start-up runs share one queue, but the cron
       run uses the scheduler thread and can overlap a manual run of the same feed.
-- [ ] **Volume names**: the root compose pins `updatercomponent_postgres-data` /
-      `updatercomponent_elasticsearch-data` to keep the loaded data, so Compose warns
-      "volume already exists but was created for project updatercomponent" on each `up`
-      (harmless). Renaming them later means a reload or a volume copy.
+- [x] **Volume names**: _done 2026-11-14._ The compose file moved into this repo (U2) with
+      default volume names; the old `updatercomponent_*` volumes were deleted.
 - [ ] **Local Elasticsearch has no auth**: the API backend can write to it locally. A
       read-only ES user needs `xpack.security.enabled=true` in compose.
 - [ ] **Cleanup**: remove `hibernate.dialect` (Hibernate warns HHH90000025: it's
       detected automatically); Spring Boot 4.1.2 is out (on 4.1.1).
+
+## 9. Decisions (2026-11-14, history restored + Docker run)
+
+Made while testing this repo with the dictionary service (`~/repos/japanese-dictionary-services`).
+The same decisions are in that repo's `docs/PLAN.md` (numbers in brackets). Rule [D70]: a
+decision that changes this repo's code, schema, feeds or compose file is logged in both repos.
+
+| # | Decision | Reason / impact |
+|---|---|---|
+| U1 | **This repo is the updater's home, with its full history** [O10 → D73]. It was created from an older commit (`b6fdd02`, 2026-09-26) of the earlier combined repository, so five later commits (integration tests, Flyway, retirement, FK indexes, profiles) were missing. They were restored with `git format-patch` + `git am`, keeping author and dates | The split was meant to move the newest code. The combined repository is retired; nothing should point to it |
+| U2 | `docker-compose.yml` **moved here** from the combined repository's root, with `docker/postgres/dictionary_reader.sql`: build context `.`, `updater-*` container names, default volume names, ES **9.4.8** [D57] | A split repo needs its own stack. 9.4.8 is what the dictionary service runs; the client here is 9.4.5, which works with it. Testcontainers still use 9.4.5 |
+| U3 | **Sense lists keep the JMdict order**: `@OrderColumn` `gloss_order` / `pos_order` / `misc_order` (0-based, PK with `sense_id`), Flyway **V4** [X8] | The first gloss is the most important; the dictionary service reads these exact names |
+| U4 | V4 on an existing DB **deletes the unordered sense lists and forgets the `jmdict` feed version**, so the next run re-imports every entry [D61] | No order can be rebuilt from old rows. "Drop and re-import" (user's call), done by the migration instead of by hand. Until that run, senses have no glosses or tags |
+| U5 | V4 **drops V3's `sense_*_sense_id_idx`** | The new PKs start with `sense_id`, so they index the foreign key; `everyForeignKeyColumnIsIndexed` accepts them |
+| U6 | `KanjiFileFetcher` errors carry the **status, rate-limit headers and the first 300 body characters** [D69] | A one-off GitHub 403 could not be explained. The GitHub API call itself is already gone (KanjiVG's latest release comes from the `releases/latest` redirect) |
+| U7 | Open [X10]: POS/misc are stored as the **expanded DTD text**, not codes | `JmdictModuleIT` asserts the expansion on purpose ("DTD entity expanded to its description"), so changing it is a design change here, not a bug fix |
+| U8 | Open [D65]: check whether the order of `name_entry` arrays and kanji `meanings[]` matters | Before the dictionary service's kanji and names phases |
+| U9 | The read-only login is **`dictionary_reader`** (was `api_reader`), created by `docker/postgres/dictionary_reader.sql` [D75] | One name in both stacks and in production. It names its reader, the dictionary service, whose config already defaults to it |
+
+Superseded by the port (were today's fixes on the stale copy): the nested-repository flag
+(the ported code uses a top-level `VocabEsRepository`), the `text` gloss / `text[]` stroke
+paths (V1 already has them), and the ES version bump in the old compose file.

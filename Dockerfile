@@ -1,5 +1,5 @@
-# Built by the root docker-compose.yml (`docker compose up --build`), or alone:
-#   docker build -t baddee-updater updaterComponent
+# Built by docker-compose.yml (`docker compose up --build`), or alone:
+#   docker build -t updater .
 
 # --- build: compile with the Maven wrapper, then split the jar into layers ---
 FROM eclipse-temurin:26-jdk AS build

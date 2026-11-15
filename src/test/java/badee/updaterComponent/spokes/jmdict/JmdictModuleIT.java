@@ -21,6 +21,9 @@ class JmdictModuleIT extends IntegrationTest {
 			<!ELEMENT JMdict (entry*)>
 			<!ENTITY n "noun (common) (futsuumeishi)">
 			<!ENTITY uk "word usually written using kana alone">
+			<!ENTITY v1 "Ichidan verb">
+			<!ENTITY vt "transitive verb">
+			<!ENTITY col "colloquial">
 			]>
 			<JMdict>
 			""";
@@ -88,6 +91,40 @@ class JmdictModuleIT extends IntegrationTest {
 		SourceVersion version = sourceVersion("jmdict");
 		assertEquals(64, version.getContentHash().length());
 		assertTrue(version.getLastUpdatedAt() != null);
+	}
+
+	@Test
+	void keepsTheJmdictOrderOfGlossesPartsOfSpeechAndMiscTags() {
+		// Deliberately not alphabetical, so a sort cannot pass for the source order.
+		publish("""
+				<entry>
+				<ent_seq>1000003</ent_seq>
+				<r_ele><reb>たべる</reb></r_ele>
+				<sense>
+				<pos>&v1;</pos>
+				<pos>&vt;</pos>
+				<misc>&uk;</misc>
+				<misc>&col;</misc>
+				<gloss>to eat</gloss>
+				<gloss>to live on</gloss>
+				<gloss>a meal (archaic)</gloss>
+				</sense>
+				</entry>
+				""");
+
+		run("jmdict");
+
+		assertEquals(List.of("to eat:0", "to live on:1", "a meal (archaic):2"), jdbc.queryForList("""
+				SELECT g.gloss || ':' || g.gloss_order FROM sense_gloss g JOIN sense s ON s.id = g.sense_id
+				WHERE s.ent_seq = 1000003 ORDER BY g.gloss_order""", String.class));
+		assertEquals(List.of("Ichidan verb", "transitive verb"), jdbc.queryForList("""
+				SELECT p.pos FROM sense_pos p JOIN sense s ON s.id = p.sense_id
+				WHERE s.ent_seq = 1000003 ORDER BY p.pos_order""", String.class));
+		assertEquals(List.of("word usually written using kana alone", "colloquial"), jdbc.queryForList("""
+				SELECT m.misc FROM sense_misc m JOIN sense s ON s.id = m.sense_id
+				WHERE s.ent_seq = 1000003 ORDER BY m.misc_order""", String.class));
+		assertEquals(List.of("to eat", "to live on", "a meal (archaic)"),
+				elasticsearchOperations.get("1000003", VocabDocument.class).getGlosses());
 	}
 
 	@Test

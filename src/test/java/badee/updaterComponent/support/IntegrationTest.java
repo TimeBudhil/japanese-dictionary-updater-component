@@ -22,7 +22,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Base for integration tests: boots the full application against real Postgres
- * and Elasticsearch containers (same images as the root {@code docker-compose.yml}) and
+ * and Elasticsearch containers (the images of {@code docker-compose.yml}; ES is 9.4.5 here, the client version, and 9.4.8 there) and
  * points every spoke's upstream URL at an in-process {@link FixtureServer}.
  *
  * <p>The containers and fixture server are started once per JVM and shared by
