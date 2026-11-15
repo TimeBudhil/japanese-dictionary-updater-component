@@ -9,7 +9,7 @@ _Last updated: 2026-11-14_
 
 - **Where we are:** all four spokes (JMdict, JMnedict, Kanji, Tatoeba) work and are tested. The
   schema is Flyway V1–V4. `main` has the full history. Not deployed anywhere yet.
-- **Docs restructure (U10):** step 4 (this repo) is done. Left: step 5, a `CLAUDE.md` in both repos.
+- **Docs system (U10) is in place** in both repos; its rules are in `CLAUDE.md`.
 - **Nothing here blocks the dictionary service's next phase (kanji).** Before its kanji and names
   phases, do the order check in X8.
 - Housekeeping: an old stash `docker-verification-2026-11-14` on `main` holds dropped fixes; it can
