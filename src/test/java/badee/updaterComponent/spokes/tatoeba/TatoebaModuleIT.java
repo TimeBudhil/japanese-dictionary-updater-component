@@ -10,6 +10,7 @@ import badee.updaterComponent.spokes.tatoeba.domain.ExampleSentence;
 import badee.updaterComponent.spokes.tatoeba.domain.ExampleSentenceRepository;
 import badee.updaterComponent.spokes.tatoeba.search.ExampleSentenceDocument;
 import badee.updaterComponent.support.IntegrationTest;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +59,8 @@ class TatoebaModuleIT extends IntegrationTest {
 		assertEquals("彼は忙しい。", doc.getJapanese());
 		assertEquals("He is busy.", doc.getEnglish());
 		assertEquals("彼(かれ)[01] は 忙しい~", doc.getIndexWords());
-		assertEquals(java.util.List.of("彼", "は", "忙しい"), doc.getHeadwords());
-		assertEquals(java.util.List.of("忙しい"), doc.getExampleFor());
+		assertEquals(List.of("彼", "は", "忙しい"), doc.getHeadwords());
+		assertEquals(List.of("忙しい"), doc.getExampleFor());
 		refresh(ExampleSentenceDocument.class);
 		assertEquals(2, elasticsearchOperations.count(
 				elasticsearchOperations.matchAllQuery(), ExampleSentenceDocument.class));

@@ -4,7 +4,7 @@ How the updater works and the rules it follows: only what the code can't tell yo
 Tasks and decisions: [`PLAN.md`](./PLAN.md). Profiles and properties:
 [`configuration.md`](./configuration.md). Running it: [`README.md`](../README.md).
 
-_Last updated: 2026-11-14_
+_Last updated: 2026-11-23_
 
 ## What it is
 
@@ -81,3 +81,9 @@ Testcontainers. Package `badee` (the dictionary service uses `baddee`, on purpos
 | Active entry | An entry the latest processed file of its feed still contains | |
 | Retired entry | An entry whose key left upstream; row kept, gone from search | deleted, archived |
 | Retire guard | The smallest share of active entries one run may leave active | |
+- **`example-sentence` mapping on an existing index (X12).** Spring Data creates the index and
+  its mapping only when the index is missing, so a snapshot index made before X12 keeps dynamic
+  mapping and `headwords` / `exampleFor` become `text`. Before re-running the `tatoeba` feed on
+  it, run `PUT /example-sentence/_mapping` with
+  `{"properties":{"headwords":{"type":"keyword"},"exampleFor":{"type":"keyword"}}}`.
+  Headwords are each B-line token with `(reading)`, `[nn]`, `{form}` and `~` stripped.

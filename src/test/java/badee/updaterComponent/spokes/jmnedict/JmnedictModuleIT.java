@@ -105,7 +105,6 @@ class JmnedictModuleIT extends IntegrationTest {
 		assertEquals(List.of(5000002L), jdbc.queryForList(jp, Long.class, "% 田中%"), "writing, 2 characters");
 		assertEquals(List.of(5000002L), jdbc.queryForList(jp, Long.class, "% たなか%"), "reading");
 		assertEquals(List.of(5000001L), jdbc.queryForList(en, Long.class, "% koizumi%"), "translation, lower case");
-		assertEquals(List.of(5000001L), jdbc.queryForList(en, Long.class, "% " + "KOIZUMI".toLowerCase() + "%"));
 		assertEquals(List.of(), jdbc.queryForList(jp, Long.class, "% 中%"), "word-start match only");
 	}
 
