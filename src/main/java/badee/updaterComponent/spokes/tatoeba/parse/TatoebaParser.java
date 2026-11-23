@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +30,33 @@ import org.springframework.stereotype.Component;
 public class TatoebaParser {
 
 	public static final String SOURCE = "tanaka-corpus";
+
+	/** Headwords of a sentence, and the subset whose tokens carry the corpus's {@code ~} marker. */
+	public record Headwords(List<String> headwords, List<String> exampleFor) {
+	}
+
+	/**
+	 * Reduces a B-line to bare headwords: each token loses its {@code (reading)}, {@code [nn]},
+	 * {@code {form}} and {@code ~}. Order follows the sentence, duplicates are dropped, and
+	 * tokens that are empty after stripping are skipped.
+	 */
+	public static Headwords parseHeadwords(String indexWords) {
+		Set<String> headwords = new LinkedHashSet<>();
+		Set<String> exampleFor = new LinkedHashSet<>();
+		if (indexWords != null) {
+			for (String token : indexWords.trim().split("\\s+")) {
+				String word = token.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]|\\{[^}]*\\}|~", "");
+				if (word.isEmpty()) {
+					continue;
+				}
+				headwords.add(word);
+				if (token.indexOf('~') >= 0) {
+					exampleFor.add(word);
+				}
+			}
+		}
+		return new Headwords(new ArrayList<>(headwords), new ArrayList<>(exampleFor));
+	}
 
 	public void parse(Path textFile, Consumer<ExampleSentence> consumer) throws IOException {
 		try (BufferedReader reader = Files.newBufferedReader(textFile, StandardCharsets.UTF_8)) {

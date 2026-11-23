@@ -21,7 +21,7 @@ class TatoebaModuleIT extends IntegrationTest {
 
 	private static final String BUSY = """
 			A: 彼は忙しい。\tHe is busy.#ID=1234_5678
-			B: 彼(かれ)[01] は 忙しい
+			B: 彼(かれ)[01] は 忙しい~
 			""";
 
 	private static final String LONG = """
@@ -48,7 +48,7 @@ class TatoebaModuleIT extends IntegrationTest {
 				"SELECT japanese, english, index_words, source FROM example_sentence WHERE id = 5678");
 		assertEquals("彼は忙しい。", row.get("japanese"));
 		assertEquals("He is busy.", row.get("english"));
-		assertEquals("彼(かれ)[01] は 忙しい", row.get("index_words"));
+		assertEquals("彼(かれ)[01] は 忙しい~", row.get("index_words"));
 		assertEquals("tanaka-corpus", row.get("source"));
 
 		ExampleSentence longSentence = repository.findById(2001L).orElseThrow();
@@ -57,6 +57,9 @@ class TatoebaModuleIT extends IntegrationTest {
 		ExampleSentenceDocument doc = elasticsearchOperations.get("5678", ExampleSentenceDocument.class);
 		assertEquals("彼は忙しい。", doc.getJapanese());
 		assertEquals("He is busy.", doc.getEnglish());
+		assertEquals("彼(かれ)[01] は 忙しい~", doc.getIndexWords());
+		assertEquals(java.util.List.of("彼", "は", "忙しい"), doc.getHeadwords());
+		assertEquals(java.util.List.of("忙しい"), doc.getExampleFor());
 		refresh(ExampleSentenceDocument.class);
 		assertEquals(2, elasticsearchOperations.count(
 				elasticsearchOperations.matchAllQuery(), ExampleSentenceDocument.class));

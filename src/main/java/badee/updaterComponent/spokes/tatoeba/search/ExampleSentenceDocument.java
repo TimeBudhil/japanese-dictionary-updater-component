@@ -1,5 +1,6 @@
 package badee.updaterComponent.spokes.tatoeba.search;
 
+import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -23,6 +24,14 @@ public class ExampleSentenceDocument {
 
 	@Field(type = FieldType.Keyword)
 	private String indexWords;
+
+	/** Bare headword of each token, in sentence order, no duplicates (X12). */
+	@Field(type = FieldType.Keyword)
+	private List<String> headwords;
+
+	/** Headwords of tokens the corpus marks with {@code ~} as good examples (X12). */
+	@Field(type = FieldType.Keyword)
+	private List<String> exampleFor;
 
 	public ExampleSentenceDocument() {
 	}
@@ -57,5 +66,21 @@ public class ExampleSentenceDocument {
 
 	public void setIndexWords(String indexWords) {
 		this.indexWords = indexWords;
+	}
+
+	public List<String> getHeadwords() {
+		return headwords;
+	}
+
+	public void setHeadwords(List<String> headwords) {
+		this.headwords = headwords;
+	}
+
+	public List<String> getExampleFor() {
+		return exampleFor;
+	}
+
+	public void setExampleFor(List<String> exampleFor) {
+		this.exampleFor = exampleFor;
 	}
 }

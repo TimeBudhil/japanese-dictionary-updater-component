@@ -127,6 +127,9 @@ public class TatoebaModule implements DataSourceModule {
 		doc.setJapanese(sentence.getJapanese());
 		doc.setEnglish(sentence.getEnglish());
 		doc.setIndexWords(sentence.getIndexWords());
+		TatoebaParser.Headwords words = TatoebaParser.parseHeadwords(sentence.getIndexWords());
+		doc.setHeadwords(words.headwords());
+		doc.setExampleFor(words.exampleFor());
 		return doc;
 	}
 }

@@ -43,4 +43,28 @@ class TatoebaParserTest {
 		assertEquals("日本語を話します。", sentences.get(1).getJapanese());
 		assertEquals("This is a pen.", sentences.get(2).getEnglish());
 	}
+
+	@Test
+	void headwordsStripReadingSenseAndFormMarkers() {
+		var h = TatoebaParser.parseHeadwords("其の[01]{その} 猫(ねこ)[01] 食べる{食べない}");
+
+		assertEquals(List.of("其の", "猫", "食べる"), h.headwords());
+		assertEquals(List.of(), h.exampleFor());
+	}
+
+	@Test
+	void tildeTokensGoToExampleForAndRepeatedWordsAppearOnce() {
+		var h = TatoebaParser.parseHeadwords("彼(かれ)[01] は 忙しい~ 彼 忙しい{忙しかった}~ は");
+
+		assertEquals(List.of("彼", "は", "忙しい"), h.headwords());
+		assertEquals(List.of("忙しい"), h.exampleFor());
+	}
+
+	@Test
+	void blankOrMarkerOnlyIndexWordsGiveNoHeadwords() {
+		var h = TatoebaParser.parseHeadwords("  [01] ~ ");
+
+		assertEquals(List.of(), h.headwords());
+		assertEquals(List.of(), h.exampleFor());
+	}
 }
