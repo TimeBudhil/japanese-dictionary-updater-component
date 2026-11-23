@@ -326,3 +326,15 @@ X12 was added from the dictionary service's grilling session (its D97, which has
 and reasoning). U18 mirrors the service's D96: updater changes are allowed from its sessions,
 with the guardrails written there.
 
+## 2026-11-23 — X5 built (without Docker)
+
+X5 is built as `V5__name_search.sql`: `pg_trgm`, `name_entry_jp_text`, `name_entry_en_text` and
+their two GIN trigram indexes, verbatim from the spec. `JmnedictModuleIT` gained a test that finds
+a fixture name through both functions. Built without Docker, so the IT has not been run yet. The
+services repo regenerates its `schema.sql` with `sh docker/generate-schema.sh`. Its text, as it
+stood in PLAN.md:
+
+- [ ] **X5** — Name search indexes. Needed now: unindexed, a names search page takes ~3 s on the
+  full 743k rows; with these, 3–40 ms (a lone kana ~200 ms; measured 2026-11-16). The service's
+  name search (its R3.2) calls the two functions by these exact names. Added as a new migration;
+  the two indexes take ~90 MB on the full load. An IT asserts both functions work after Flyway.

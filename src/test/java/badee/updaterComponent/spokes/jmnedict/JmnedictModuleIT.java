@@ -95,6 +95,20 @@ class JmnedictModuleIT extends IntegrationTest {
 		assertFalse(isRetired(5000002));
 	}
 
+	@Test
+	void nameSearchFunctionsFindTheImportedNameByWritingReadingAndTranslation() {
+		publish(KOIZUMI + TANAKA);
+		run("jmnedict");
+
+		String jp = "SELECT ent_seq FROM name_entry WHERE name_entry_jp_text(kanji, readings) LIKE ?";
+		String en = "SELECT ent_seq FROM name_entry WHERE name_entry_en_text(translations) LIKE ?";
+		assertEquals(List.of(5000002L), jdbc.queryForList(jp, Long.class, "% 田中%"), "writing, 2 characters");
+		assertEquals(List.of(5000002L), jdbc.queryForList(jp, Long.class, "% たなか%"), "reading");
+		assertEquals(List.of(5000001L), jdbc.queryForList(en, Long.class, "% koizumi%"), "translation, lower case");
+		assertEquals(List.of(5000001L), jdbc.queryForList(en, Long.class, "% " + "KOIZUMI".toLowerCase() + "%"));
+		assertEquals(List.of(), jdbc.queryForList(jp, Long.class, "% 中%"), "word-start match only");
+	}
+
 	private void publish(String entries) {
 		fixtures.publishGzipped("/JMnedict.xml.gz", HEADER + entries + "</JMnedict>");
 	}

@@ -10,8 +10,8 @@ _Last updated: 2026-11-23_
 
 ## Next session
 
-- **Where we are:** all four spokes work and are tested. The schema is Flyway V1–V4. Not deployed.
-- **Next:** X5 (as `V5__name_search.sql`) and X12, below. The dictionary service's session builds
+- **Where we are:** all four spokes work and are tested. The schema is Flyway V1–V5. Not deployed.
+- **Next:** X12, below (X5 is built: V5, IT not yet run). The dictionary service's session builds
   them here and then its side, updater committed first (U18). Without Docker they reach 🔵. With
   Docker, the service's `docs/PLAN.md` "Next session" has the snapshot and seed steps.
 - Housekeeping: an old stash `docker-verification-2026-11-14` on `main` holds dropped fixes; it can
@@ -30,26 +30,6 @@ repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them)
 - [ ] **X10** — Decide: store POS/misc as JMdict codes (`n`, `v1`, `sl`) instead of the expanded
   text. `JmdictModuleIT` asserts the expansion on purpose, so this is a design change in both
   repos. Needs a re-import.
-- [ ] **X5** — Name search indexes. Needed now: unindexed, a names search page takes ~3 s on the
-  full 743k rows; with these, 3–40 ms (a lone kana ~200 ms; measured 2026-11-16). The service's name search (its R3.2) already
-  calls the two functions by these exact names, so its name search fails until this migration
-  runs. Add as a new migration, verbatim:
-  ```sql
-  CREATE EXTENSION IF NOT EXISTS pg_trgm;
-  -- Values joined by spaces, with a leading space, so `LIKE '% q%'` is a word-start match
-  -- that the trigram index serves even for 2-character queries (田中). array_to_string is
-  -- only STABLE, so it can't be indexed directly; these wrappers are IMMUTABLE.
-  CREATE FUNCTION name_entry_jp_text(kanji text[], readings text[]) RETURNS text
-      LANGUAGE sql IMMUTABLE PARALLEL SAFE
-      AS $$ SELECT ' ' || array_to_string(kanji || readings, ' ') $$;
-  CREATE FUNCTION name_entry_en_text(translations text[]) RETURNS text
-      LANGUAGE sql IMMUTABLE PARALLEL SAFE
-      AS $$ SELECT ' ' || lower(array_to_string(translations, ' ')) $$;
-  CREATE INDEX name_entry_jp_text_idx ON name_entry USING gin (name_entry_jp_text(kanji, readings) gin_trgm_ops);
-  CREATE INDEX name_entry_en_text_idx ON name_entry USING gin (name_entry_en_text(translations) gin_trgm_ops);
-  ```
-  The two indexes take ~90 MB on the full load. An IT asserts that both functions exist after
-  Flyway. The service then regenerates its `schema.sql` (its D90, D91).
 - [ ] **X6** — A word-level JLPT source, once the service decides which list (its O3).
 - [ ] **X12** — Sentence headwords, for the service's R4.2 (its D97). The tatoeba spoke parses
   `index_words` and adds two keyword arrays to the `example-sentence` document: `headwords`, each
