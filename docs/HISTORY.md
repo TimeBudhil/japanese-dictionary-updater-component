@@ -254,3 +254,60 @@ Tracked here so they're not forgotten. Do them in the updater repo.
 | X10 | _Note (2026-11-14): the updater asserts the expansion on purpose (`JmdictModuleIT`, "DTD entity expanded to its description", U7), and this repo's fixtures now use the expanded text (D77). Changing it is a design decision in both repos._ Store JMdict **entity codes** for POS/misc (`n`, `v1`, `exp`, `sl`), not the expanded DTD text (`noun (common) (futsuumeishi)`). The parser resolves the inline DTD entities today. Codes are short, stable, and what Phase 7 tag search and Phase 8 lists (`exp`, slang) want; the display text can be a lookup table. Needs a re-import | Phases 7, 8 |
 | X11 | _Mostly resolved by the port: the GitHub API call is gone (KanjiVG's latest release comes from the `releases/latest` redirect), and failures now carry status, rate-limit headers and body (D69, U6). Pinning `updater.kanjivg.url` in production is still an option._ (Optional) KanjiVG's "latest release" lookup calls the GitHub API without a token, so it can get **HTTP 403** (rate limit; seen once 2026-11-14, fine on retry). Pin `updater.kanjivg.url` or send a token in production | Reliability |
 
+## 2026-11-23 — Task lists moved to REQUIREMENTS.md (U17)
+
+These PLAN.md sections left for the app-wide `REQUIREMENTS.md` in the dictionary service, to
+keep one task list (its D95). Moved here word for word. Where each item went:
+Cognito → R13.2, R13.3; image, CI → R15.1; one task → R15.2, S12; secrets → R15.3; cron time
+zone → R12.1; memory → R15.5; network, KanjiVG pin → R15.6; RDS reader, ES keys → R15.4;
+monitoring design → open question; overlapping runs → R12.6; local ES auth → S25; retire-guard
+tuning → R12.7; radical cleanup → S10; bulk upserts → S8; config server → S26; container
+diagram → S27; `hibernate.dialect` and Boot 4.1.2 → S28.
+
+## Go live on Cognito
+
+- [ ] Create the user pool, an app client for admin callers, and the group `updater-admin`.
+- [ ] Set `COGNITO_ISSUER_URI` and `COGNITO_CLIENT_IDS` (the `prod` profile reads them).
+- [ ] Smoke test with an **access** token: 200 for a group member, 403 for a non-member, 401
+  without a token. ID tokens are rejected by design.
+- [ ] Once no environment uses the dev token, delete `hub/StubJwtDecoderConfig` and the
+  `updater.admin.dev-token` / `stub-auth` properties.
+
+## AWS deployment (not started)
+
+- [ ] Image: build the `Dockerfile`, push to ECR. The image build skips tests, so CI runs
+  `./mvnw verify` first (Testcontainers needs Docker).
+- [ ] Runtime, e.g. ECS Fargate, with **exactly one** task: the cron runs in-process, so two
+  tasks would run every feed twice. More tasks need a lock (ShedLock) or an EventBridge schedule.
+- [ ] Secrets: `DB_*`, `ELASTICSEARCH_*`, `COGNITO_*` from Secrets Manager / SSM as env vars.
+- [ ] Cron time zone: the container is UTC, so `0 0 3 * * *` is 03:00 UTC.
+- [ ] Memory: the JVM takes 75% of the container. Size it from a measured JMdict run.
+- [ ] Network: outbound HTTPS to EDRDG, GitHub (KanjiVG) and Tatoeba; inbound only from admin
+  callers. Consider pinning `updater.kanjivg.url`, since GitHub can rate-limit (once seen as a 403).
+- [ ] RDS: the datasource user owns the schema. Create `dictionary_reader` through infra, with
+  the grants from `docker/postgres/dictionary_reader.sql` and a real password.
+- [ ] Elastic Cloud: one write API key for the updater (`vocab`, `example-sentence`), a separate
+  read-only key for the dictionary service.
+
+## Other open work
+
+- [ ] Monitoring, tracing, logging: needs its own design session. Decided so far: U16.
+  Open: OpenTelemetry vs Elastic APM, log shipping, JSON logs, dashboards.
+- [ ] Overlapping runs: a cron run can overlap a manual run of the same feed (different threads).
+- [ ] Local ES has no auth, so the dictionary service could write to it locally. A read-only ES
+  user needs `xpack.security.enabled=true`.
+- [ ] Tune each feed's `retire-guard` from the logged retirement counts after a few real releases
+  (first run: about 0.0005% per feed, far below the 2% the guard allows).
+- [ ] Radicals that RADKFILE drops stay in `radical`. A cleanup job for long-retired,
+  unreferenced rows is possible later.
+- [ ] Run time: a changed JMdict file takes ~10 min, mostly row-by-row statements. If that
+  matters, switch to `SEQUENCE` ids and bulk upserts.
+- [ ] A config server may replace the duplicated `local` / `docker` property files.
+- [ ] The container diagram (in the dictionary service's `written_reports/`) says MySQL. Add the
+  local stack and the separate observability ES.
+- [ ] Cleanup: remove `hibernate.dialect` (detected automatically); upgrade to Boot 4.1.2.
+
+Decision:
+- **U17 — one task list.** Asked whether the updater should follow the services repo's
+  workflow. Options offered: move the task lists into REQUIREMENTS.md and keep the committed
+  `X<n>` specs here (advised). Chosen as advised; the README was reordered to match.

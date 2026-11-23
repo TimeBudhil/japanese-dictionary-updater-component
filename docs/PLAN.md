@@ -1,9 +1,12 @@
 # Updater — Plan
 
-What's next, what's left, and the decisions in force. How things work: [`CONTEXT.md`](./CONTEXT.md).
+What's next, the `X<n>` specs the dictionary service codes against, and the decisions in force.
+Every other task is a row in the app-wide
+[`REQUIREMENTS.md`](../../japanese-dictionary-services/written_reports/REQUIREMENTS.md) (updater
+rows R12–R15, S8–S12, S25–S28), whose status tags track progress (U17). How things work: [`CONTEXT.md`](./CONTEXT.md).
 Done work and old decisions: [`HISTORY.md`](./HISTORY.md) (not read by default).
 
-_Last updated: 2026-11-16_
+_Last updated: 2026-11-23_
 
 ## Next session
 
@@ -17,7 +20,8 @@ _Last updated: 2026-11-16_
 
 ## Tasks for the dictionary service
 
-The dictionary service lists these under "Waiting on the updater". Ids are shared by both repos.
+Committed specs the dictionary service depends on. Ids are shared by both repos; the services
+repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them).
 
 - [ ] **X8** — Check whether the order of `kanji.meanings[]` and the `name_entry` arrays matters
   and is kept. If it is lost, add order columns in a new migration. Needed before the service's
@@ -52,49 +56,6 @@ The dictionary service lists these under "Waiting on the updater". Ids are share
   `schema.sql` (its D90, D91).
 - [ ] **X6** — A word-level JLPT source, once the service decides which list (its O3).
 
-## Go live on Cognito
-
-- [ ] Create the user pool, an app client for admin callers, and the group `updater-admin`.
-- [ ] Set `COGNITO_ISSUER_URI` and `COGNITO_CLIENT_IDS` (the `prod` profile reads them).
-- [ ] Smoke test with an **access** token: 200 for a group member, 403 for a non-member, 401
-  without a token. ID tokens are rejected by design.
-- [ ] Once no environment uses the dev token, delete `hub/StubJwtDecoderConfig` and the
-  `updater.admin.dev-token` / `stub-auth` properties.
-
-## AWS deployment (not started)
-
-- [ ] Image: build the `Dockerfile`, push to ECR. The image build skips tests, so CI runs
-  `./mvnw verify` first (Testcontainers needs Docker).
-- [ ] Runtime, e.g. ECS Fargate, with **exactly one** task: the cron runs in-process, so two
-  tasks would run every feed twice. More tasks need a lock (ShedLock) or an EventBridge schedule.
-- [ ] Secrets: `DB_*`, `ELASTICSEARCH_*`, `COGNITO_*` from Secrets Manager / SSM as env vars.
-- [ ] Cron time zone: the container is UTC, so `0 0 3 * * *` is 03:00 UTC.
-- [ ] Memory: the JVM takes 75% of the container. Size it from a measured JMdict run.
-- [ ] Network: outbound HTTPS to EDRDG, GitHub (KanjiVG) and Tatoeba; inbound only from admin
-  callers. Consider pinning `updater.kanjivg.url`, since GitHub can rate-limit (once seen as a 403).
-- [ ] RDS: the datasource user owns the schema. Create `dictionary_reader` through infra, with
-  the grants from `docker/postgres/dictionary_reader.sql` and a real password.
-- [ ] Elastic Cloud: one write API key for the updater (`vocab`, `example-sentence`), a separate
-  read-only key for the dictionary service.
-
-## Other open work
-
-- [ ] Monitoring, tracing, logging: needs its own design session. Decided so far: U16.
-  Open: OpenTelemetry vs Elastic APM, log shipping, JSON logs, dashboards.
-- [ ] Overlapping runs: a cron run can overlap a manual run of the same feed (different threads).
-- [ ] Local ES has no auth, so the dictionary service could write to it locally. A read-only ES
-  user needs `xpack.security.enabled=true`.
-- [ ] Tune each feed's `retire-guard` from the logged retirement counts after a few real releases
-  (first run: about 0.0005% per feed, far below the 2% the guard allows).
-- [ ] Radicals that RADKFILE drops stay in `radical`. A cleanup job for long-retired,
-  unreferenced rows is possible later.
-- [ ] Run time: a changed JMdict file takes ~10 min, mostly row-by-row statements. If that
-  matters, switch to `SEQUENCE` ids and bulk upserts.
-- [ ] A config server may replace the duplicated `local` / `docker` property files.
-- [ ] The container diagram (in the dictionary service's `written_reports/`) says MySQL. Add the
-  local stack and the separate observability ES.
-- [ ] Cleanup: remove `hibernate.dialect` (detected automatically); upgrade to Boot 4.1.2.
-
 ## Decisions in force
 
 Full reasoning for each id: `HISTORY.md`.
@@ -111,3 +72,4 @@ Full reasoning for each id: `HISTORY.md`.
 | U14 | No default profile: `local`, `docker` or `prod` must be chosen, so a missing setting fails fast |
 | U15 | Production search is Elastic Cloud (ES 9.x); AWS OpenSearch doesn't work with the 9.x client |
 | U16 | Observability gets its own Elasticsearch, never the search cluster |
+| U17 | Tasks other than `X<n>` specs live as rows in the services repo's `written_reports/REQUIREMENTS.md`; PLAN.md keeps Next session, `X<n>` specs and decisions (mirrors its D95) |

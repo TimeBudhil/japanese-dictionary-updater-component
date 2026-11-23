@@ -4,16 +4,35 @@ Downloads the open Japanese dictionary sources (JMdict, JMnedict, KanjiDic2, Kan
 Tatoeba) on a schedule and keeps Postgres and Elasticsearch up to date. It is the only writer
 of the dictionary data. The read-only API that serves it lives in `../japanese-dictionary-services`.
 
+## The docs
+
+| File | Holds |
+|---|---|
+| [`docs/PLAN.md`](docs/PLAN.md) | **Start here.** Next session, `X<n>` specs for the dictionary service, decisions in force |
+| [`../japanese-dictionary-services/written_reports/REQUIREMENTS.md`](../japanese-dictionary-services/written_reports/REQUIREMENTS.md) | What the **whole app** must do; its rows and status tags are the task list (U17). Updater rows name the spoke or `hub`. Read one section at a time |
+| [`docs/CONTEXT.md`](docs/CONTEXT.md) | How it works: hub and spokes, runs, retirement, data caveats, glossary |
+| [`docs/configuration.md`](docs/configuration.md) | Profiles, properties, env vars, logins |
+| [`docs/HISTORY.md`](docs/HISTORY.md) | Archive of done work, old decisions and the former ADRs. Read only when digging |
+| [`CLAUDE.md`](CLAUDE.md) | Rules, including "Keeping the docs current": which doc each kind of change updates |
+| `../japanese-dictionary-services/written_reports/specs/` | Specs for work in progress. Local only (gitignored) |
+
+Ids: `U<n>` a decision of this repo, `X<n>` a task shared with the dictionary service. The
+dictionary service's own decisions are `D<n>`, in its `docs/PLAN.md`. Requirement ids (`R`, `S`,
+`OUT`, `N`) are in REQUIREMENTS.md.
+
 ## Coming back after a while
 
 1. Read **"Next session"** at the top of [`docs/PLAN.md`](docs/PLAN.md).
-2. `git status` here and in `../japanese-dictionary-services`. Cross-repo work is tracked in both
-   repos' PLAN.md files under shared `X<n>` ids.
-3. Start the stack (next section). For how things work, read [`docs/CONTEXT.md`](docs/CONTEXT.md).
-
-Requirements: JDK 26, Docker.
+2. `git status` and `git pull` here and in `../japanese-dictionary-services`. Cross-repo work is
+   tracked under shared `X<n>` ids.
+3. Find the requirement you are working on in the services repo's
+   [`written_reports/REQUIREMENTS.md`](../japanese-dictionary-services/written_reports/REQUIREMENTS.md)
+   (updater rows: R12–R15): its spoke, status and acceptance criterion.
+4. Start the stack (next section). For how things work, read [`docs/CONTEXT.md`](docs/CONTEXT.md).
 
 ## Run it
+
+Needs: JDK 26, Docker.
 
 ```bash
 docker compose up --build                          # databases + updater; every feed runs on startup
@@ -57,16 +76,3 @@ See its README, "Full load".
 Add a new `src/main/resources/db/migration/V<n>__<description>.sql`. Never edit an applied one:
 Flyway checksums every file, comments included. Then, in the dictionary service, run
 `sh docker/generate-schema.sh` so its seed schema follows.
-
-## The docs
-
-| File | Holds |
-|---|---|
-| `docs/PLAN.md` | Next session, open tasks, decisions in force |
-| `docs/CONTEXT.md` | How it works: hub and spokes, runs, retirement, data caveats, glossary |
-| `docs/configuration.md` | Profiles, properties, env vars, logins |
-| `docs/HISTORY.md` | Archive of done work, old decisions and the former ADRs. Read only when digging |
-| `CLAUDE.md` | How Claude keeps these docs up to date |
-
-Ids: `U<n>` a decision of this repo, `X<n>` a task shared with the dictionary service. The
-dictionary service's own decisions are `D<n>`, in its `docs/PLAN.md`.

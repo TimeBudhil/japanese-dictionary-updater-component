@@ -24,7 +24,7 @@ One purpose per file, each with a budget. Before adding past a budget, cut first
 |---|---|---|
 | `CLAUDE.md` | These rules and pointers | 80 lines |
 | `README.md` | Index of the docs, how to restart and run | 100 lines |
-| `docs/PLAN.md` | Next session, `X<n>` specs, open tasks, decisions in force | 12 KB |
+| `docs/PLAN.md` | Next session, `X<n>` specs, decisions in force. Other tasks are REQUIREMENTS.md rows (U17) | 12 KB |
 | `docs/CONTEXT.md` | What the code can't say: why, rules, caveats | 8 KB |
 | `docs/configuration.md` | Profiles and properties reference | 6 KB |
 | `docs/HISTORY.md` | Done work, superseded decisions, verification notes. Append-only | none |
@@ -43,7 +43,8 @@ Update the docs in the same change as the code. After any change, apply every ro
 | You learn how something works, or a data caveat | CONTEXT.md |
 | A profile, property or env var changes | `docs/configuration.md` |
 | Run steps, ports or the admin API change | README.md |
-| A new doc or folder | A row in README.md's docs table |
+| A new doc or folder | A row in README.md "The docs", and a return step if a returning reader needs it |
+| A new task (not an `X<n>` spec) | A row in REQUIREMENTS.md, never a task list in PLAN.md |
 | A schema migration is added | Say in the task report that the services repo runs `sh docker/generate-schema.sh` |
 | A spec is written | `../japanese-dictionary-services/written_reports/specs/<component>.md` (gitignored) |
 | A session ends | Rewrite PLAN.md "Next session" (15 lines max) so the next session can start from it alone |
@@ -52,7 +53,9 @@ Bump `_Last updated_` in each doc you change.
 
 ## Writing
 
-- **README stays a lightweight index:** how to run, plus a link to every doc with its path.
+- **README stays a lightweight index:** a link to every doc with its path, then how to run.
+  Section order is fixed: "The docs", "Coming back after a while", "Run it", then "Tests" and
+  "Schema changes".
 - **Point to the code** for anything it already says (schema, config, versions, class layout).
 - **Write sentences that read on their own.** Ids go at the end as a reference, like "(U11)".
 - **Cross-repo decisions** live in the repo whose code or data they change; the other links to
