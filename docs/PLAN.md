@@ -10,11 +10,10 @@ _Last updated: 2026-11-23_
 
 ## Next session
 
-- **Where we are:** all four spokes (JMdict, JMnedict, Kanji, Tatoeba) work and are tested. The
-  schema is Flyway V1–V4. `main` has the full history. Not deployed anywhere yet.
-- **Docs system (U10) is in place** in both repos; its rules are in `CLAUDE.md`.
-- **Nothing here blocks the dictionary service's next phase (kanji).** Before its kanji and names
-  phases, do the order check in X8.
+- **Where we are:** all four spokes work and are tested. The schema is Flyway V1–V4. Not deployed.
+- **Next:** X5 (as `V5__name_search.sql`) and X12, below. The dictionary service's session builds
+  them here and then its side, updater committed first (U18). Without Docker they reach 🔵. With
+  Docker, the service's `docs/PLAN.md` "Next session" has the snapshot and seed steps.
 - Housekeeping: an old stash `docker-verification-2026-11-14` on `main` holds dropped fixes; it can
   be deleted with `git stash drop`.
 
@@ -23,9 +22,6 @@ _Last updated: 2026-11-23_
 Committed specs the dictionary service depends on. Ids are shared by both repos; the services
 repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them).
 
-- [ ] **X8** — Check whether the order of `kanji.meanings[]` and the `name_entry` arrays matters
-  and is kept. If it is lost, add order columns in a new migration. Needed before the service's
-  kanji and names phases. (The sense lists already keep order: U3.)
 - [ ] **X2** — kuromoji + ICU multi-fields on `vocab` and `example-sentence` (keyword exact,
   tokenized, edge-ngram prefix), plus a keyword subfield on `glosses` so English gets an exact
   match. Needs an ES image with the plugins.
@@ -35,8 +31,8 @@ repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them)
   text. `JmdictModuleIT` asserts the expansion on purpose, so this is a design change in both
   repos. Needs a re-import.
 - [ ] **X5** — Name search indexes. Needed now: unindexed, a names search page takes ~3 s on the
-  full 743k rows; with these, 3–40 ms (a lone kana ~200 ms; measured 2026-11-16). The service's Phase 3 queries already
-  call the two functions by these exact names, so its name search fails until this migration
+  full 743k rows; with these, 3–40 ms (a lone kana ~200 ms; measured 2026-11-16). The service's name search (its R3.2) already
+  calls the two functions by these exact names, so its name search fails until this migration
   runs. Add as a new migration, verbatim:
   ```sql
   CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -52,9 +48,15 @@ repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them)
   CREATE INDEX name_entry_jp_text_idx ON name_entry USING gin (name_entry_jp_text(kanji, readings) gin_trgm_ops);
   CREATE INDEX name_entry_en_text_idx ON name_entry USING gin (name_entry_en_text(translations) gin_trgm_ops);
   ```
-  The two indexes take ~90 MB on the full load. The service then regenerates its
-  `schema.sql` (its D90, D91).
+  The two indexes take ~90 MB on the full load. An IT asserts that both functions exist after
+  Flyway. The service then regenerates its `schema.sql` (its D90, D91).
 - [ ] **X6** — A word-level JLPT source, once the service decides which list (its O3).
+- [ ] **X12** — Sentence headwords, for the service's R4.2 (its D97). The tatoeba spoke parses
+  `index_words` and adds two keyword arrays to the `example-sentence` document: `headwords`, each
+  token's headword with `(reading)`, `[nn]`, `{form}` and `~` removed, in order, duplicates
+  dropped; and `exampleFor`, the headwords of tokens marked `~`. `indexWords` stays as it is; no
+  Postgres change. `TatoebaParserTest` covers `其の[01]{その}`, `猫(ねこ)[01]`, `食べる{食べない}`
+  and a `~` token. Re-run the `tatoeba` feed. The service keeps its own copy of the mapping.
 
 ## Decisions in force
 
@@ -73,3 +75,4 @@ Full reasoning for each id: `HISTORY.md`.
 | U15 | Production search is Elastic Cloud (ES 9.x); AWS OpenSearch doesn't work with the 9.x client |
 | U16 | Observability gets its own Elasticsearch, never the search cluster |
 | U17 | Tasks other than `X<n>` specs live as rows in the services repo's `written_reports/REQUIREMENTS.md`; PLAN.md keeps Next session, `X<n>` specs and decisions (mirrors its D95) |
+| U18 | The dictionary service's sessions may change this repo when one of its requirement rows needs it: tracked by its `X<n>`, committed here first, U13 still holds (mirrors its D96) |

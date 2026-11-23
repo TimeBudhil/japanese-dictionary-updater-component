@@ -311,3 +311,18 @@ Decision:
 - **U17 — one task list.** Asked whether the updater should follow the services repo's
   workflow. Options offered: move the task lists into REQUIREMENTS.md and keep the committed
   `X<n>` specs here (advised). Chosen as advised; the README was reordered to match.
+
+## 2026-11-23 — X8 done, X12 added, U18
+
+X8 is done: kanji arrays and the `name_entry` arrays keep upstream order (the parser appends
+`keb`, `reb` and `trans_det` in file order and keeps the first of each repeated name type).
+X3's future tables get order columns as part of X3. Its text, as it stood in PLAN.md:
+
+- [ ] **X8** — Check whether the order of `kanji.meanings[]` and the `name_entry` arrays matters
+  and is kept. If it is lost, add order columns in a new migration. Needed before the service's
+  kanji and names phases. (The sense lists already keep order: U3.)
+
+X12 was added from the dictionary service's grilling session (its D97, which has the options
+and reasoning). U18 mirrors the service's D96: updater changes are allowed from its sessions,
+with the guardrails written there.
+

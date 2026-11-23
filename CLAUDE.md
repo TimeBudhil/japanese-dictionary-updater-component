@@ -46,7 +46,7 @@ Update the docs in the same change as the code. After any change, apply every ro
 | A new doc or folder | A row in README.md "The docs", and a return step if a returning reader needs it |
 | A new task (not an `X<n>` spec) | A row in REQUIREMENTS.md, never a task list in PLAN.md |
 | A schema migration is added | Say in the task report that the services repo runs `sh docker/generate-schema.sh` |
-| A spec is written | `../japanese-dictionary-services/written_reports/specs/<component>.md` (gitignored) |
+| A spec is written | `../japanese-dictionary-services/written_reports/specs/<YYYY-MM-DD>-<name>/spec.md`, with its tickets in `issues/<NN>-<slug>.md` beside it (gitignored) |
 | A session ends | Rewrite PLAN.md "Next session" (15 lines max) so the next session can start from it alone |
 
 Bump `_Last updated_` in each doc you change.
@@ -61,6 +61,7 @@ Bump `_Last updated_` in each doc you change.
 - **Cross-repo decisions** live in the repo whose code or data they change; the other links to
   it. Tasks the dictionary service waits on are `X<n>`, described in full in PLAN.md here.
 - **Code comments** explain only what the code can't: a non-obvious reason or a gotcha.
+- **No phases.** Name work by its R-ids or `X<n>`.
 
 ## Working
 
