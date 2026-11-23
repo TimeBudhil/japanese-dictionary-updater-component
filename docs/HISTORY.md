@@ -338,3 +338,19 @@ stood in PLAN.md:
   full 743k rows; with these, 3–40 ms (a lone kana ~200 ms; measured 2026-11-16). The service's
   name search (its R3.2) calls the two functions by these exact names. Added as a new migration;
   the two indexes take ~90 MB on the full load. An IT asserts both functions work after Flyway.
+
+## 2026-11-23 — X12 done (built without Docker)
+
+The tatoeba spoke now writes two keyword arrays to the `example-sentence` document: `headwords`
+(each token's headword with `(reading)`, `[nn]`, `{form}` and `~` removed, in order, duplicates
+dropped) and `exampleFor` (headwords of `~` tokens). `indexWords` and the Postgres table are
+unchanged; no migration. `TatoebaParserTest` passes; `TatoebaModuleIT` compiles but was not run
+(no Docker), so the service's R14.8 is 🔵 until the `tatoeba` feed is re-run. Its text, as it
+stood in PLAN.md:
+
+- [ ] **X12** — Sentence headwords, for the service's R4.2 (its D97). The tatoeba spoke parses
+  `index_words` and adds two keyword arrays to the `example-sentence` document: `headwords`, each
+  token's headword with `(reading)`, `[nn]`, `{form}` and `~` removed, in order, duplicates
+  dropped; and `exampleFor`, the headwords of tokens marked `~`. `indexWords` stays as it is; no
+  Postgres change. `TatoebaParserTest` covers `其の[01]{その}`, `猫(ねこ)[01]`, `食べる{食べない}`
+  and a `~` token. Re-run the `tatoeba` feed. The service keeps its own copy of the mapping.

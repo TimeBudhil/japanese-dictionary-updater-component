@@ -11,7 +11,7 @@ _Last updated: 2026-11-23_
 ## Next session
 
 - **Where we are:** all four spokes work and are tested. The schema is Flyway V1–V5. Not deployed.
-- **Next:** X12, below (X5 is built: V5, IT not yet run). The dictionary service's session builds
+- **Next:** X5 and X12 are built without Docker (HISTORY.md); their ITs still need a Docker run. The dictionary service's session builds
   them here and then its side, updater committed first (U18). Without Docker they reach 🔵. With
   Docker, the service's `docs/PLAN.md` "Next session" has the snapshot and seed steps.
 - Housekeeping: an old stash `docker-verification-2026-11-14` on `main` holds dropped fixes; it can
@@ -31,12 +31,6 @@ repo's REQUIREMENTS.md marks each blocked row "blocked by X<n>" (R14 lists them)
   text. `JmdictModuleIT` asserts the expansion on purpose, so this is a design change in both
   repos. Needs a re-import.
 - [ ] **X6** — A word-level JLPT source, once the service decides which list (its O3).
-- [ ] **X12** — Sentence headwords, for the service's R4.2 (its D97). The tatoeba spoke parses
-  `index_words` and adds two keyword arrays to the `example-sentence` document: `headwords`, each
-  token's headword with `(reading)`, `[nn]`, `{form}` and `~` removed, in order, duplicates
-  dropped; and `exampleFor`, the headwords of tokens marked `~`. `indexWords` stays as it is; no
-  Postgres change. `TatoebaParserTest` covers `其の[01]{その}`, `猫(ねこ)[01]`, `食べる{食べない}`
-  and a `~` token. Re-run the `tatoeba` feed. The service keeps its own copy of the mapping.
 
 ## Decisions in force
 
