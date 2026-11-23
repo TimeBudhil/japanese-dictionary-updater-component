@@ -8,6 +8,9 @@ The updater: the only writer of the dictionary data. The read-only API that serv
 - **Start of a session:** read "Next session" at the top of `docs/PLAN.md`.
 - **How something works** (hub and spokes, runs, retirement, data caveats, glossary): `docs/CONTEXT.md`.
 - **Profiles, properties, env vars, logins:** `docs/configuration.md`.
+- **What the whole app must do** (all four applications):
+  `../japanese-dictionary-services/written_reports/REQUIREMENTS.md`. App-wide docs live in that
+  repo (its D92); updater requirements there name the spoke or `hub`.
 - **Running, the admin API, tests:** `README.md`.
 - **An id that `docs/PLAN.md` doesn't list, or the user asks about the past:** `docs/HISTORY.md`.
   It is the archive; leave it closed otherwise.
