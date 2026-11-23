@@ -13,7 +13,7 @@ _Last updated: 2026-11-23_
 - **Where we are:** all four spokes work and are tested. The schema is Flyway V1–V5. Not deployed.
 - **Next:** X5 and X12 are built without Docker (HISTORY.md); their ITs still need a Docker run. The dictionary service's session builds
   them here and then its side, updater committed first (U18). Without Docker they reach 🔵. With
-  Docker, the service's `docs/PLAN.md` "Next session" has the snapshot and seed steps.
+  Docker, the service's `written_reports/PLAN.md` "Docker session" has the snapshot and seed steps.
 - Housekeeping: an old stash `docker-verification-2026-11-14` on `main` holds dropped fixes; it can
   be deleted with `git stash drop`.
 

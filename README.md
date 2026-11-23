@@ -17,7 +17,7 @@ of the dictionary data. The read-only API that serves it lives in `../japanese-d
 | `../japanese-dictionary-services/written_reports/specs/` | Specs for work in progress. Local only (gitignored) |
 
 Ids: `U<n>` a decision of this repo, `X<n>` a task shared with the dictionary service. The
-dictionary service's own decisions are `D<n>`, in its `docs/PLAN.md`. Requirement ids (`R`, `S`,
+dictionary service's own decisions are `D<n>`, in its `written_reports/PLAN.md`. Requirement ids (`R`, `S`,
 `OUT`, `N`) are in REQUIREMENTS.md.
 
 ## Coming back after a while
