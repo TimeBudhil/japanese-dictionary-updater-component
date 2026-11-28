@@ -7,7 +7,7 @@ The updater: the only writer of the dictionary data. The read-only API that serv
 
 Read as little as the task needs.
 - **Start of a session:** "Next session" at the top of `docs/PLAN.md`.
-- **What to build:** `../japanese-dictionary-services/written_reports/REQUIREMENTS.md`, **only
+- **What to build:** `../japanese-dictionary-services/docs/REQUIREMENTS.md`, **only
   the section or R-IDs** for the task (grep the id; updater rows name the spoke or `hub`).
   Never read the whole file. App-wide docs live in that repo (its D92).
 - **How something works** (hub and spokes, runs, retirement, data caveats, glossary): `docs/CONTEXT.md`.
@@ -46,7 +46,7 @@ Update the docs in the same change as the code. After any change, apply every ro
 | A new doc or folder | A row in README.md "The docs", and a return step if a returning reader needs it |
 | A new task (not an `X<n>` spec) | A row in REQUIREMENTS.md, never a task list in PLAN.md |
 | A schema migration is added | Say in the task report that the services repo runs `sh docker/generate-schema.sh` |
-| A spec is written | `../japanese-dictionary-services/written_reports/specs/<YYYY-MM-DD>-<name>/spec.md`, with its tickets in `issues/<NN>-<slug>.md` beside it (gitignored) |
+| A spec is written | the phase doc `../japanese-dictionary-services/docs/phases/NN-slug/phase.md`, with its tasks in `tasks/` beside it |
 | A session ends | Rewrite PLAN.md "Next session" (15 lines max) so the next session can start from it alone |
 
 Bump `_Last updated_` in each doc you change.

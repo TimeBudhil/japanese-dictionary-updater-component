@@ -9,16 +9,16 @@ of the dictionary data. The read-only API that serves it lives in `../japanese-d
 | File | Holds |
 |---|---|
 | [`docs/PLAN.md`](docs/PLAN.md) | **Start here.** Next session, `X<n>` specs for the dictionary service, decisions in force |
-| [`../japanese-dictionary-services/written_reports/REQUIREMENTS.md`](../japanese-dictionary-services/written_reports/REQUIREMENTS.md) | What the **whole app** must do; its rows and status tags are the task list (U17). Updater rows name the spoke or `hub`. Read one section at a time |
+| [`../japanese-dictionary-services/docs/REQUIREMENTS.md`](../japanese-dictionary-services/docs/REQUIREMENTS.md) | What the **whole app** must do; its rows and status tags are the task list (U17). Updater rows name the spoke or `hub`. Read one section at a time |
 | [`docs/CONTEXT.md`](docs/CONTEXT.md) | How it works: hub and spokes, runs, retirement, data caveats, glossary |
 | [`docs/configuration.md`](docs/configuration.md) | Profiles, properties, env vars, logins |
 | [`docs/HISTORY.md`](docs/HISTORY.md) | Archive of done work, old decisions and the former ADRs. Read only when digging |
 | [`CLAUDE.md`](CLAUDE.md) | Rules, including "Keeping the docs current": which doc each kind of change updates |
-| `../japanese-dictionary-services/written_reports/specs/` | Specs for work in progress. Local only (gitignored) |
+| `../japanese-dictionary-services/docs/PLAN.md` and `docs/phases/` | Ordered phases of R-ids, each with its phase doc and tasks |
 
 Ids: `U<n>` a decision of this repo, `X<n>` a task shared with the dictionary service. The
-dictionary service's own decisions are `D<n>`, in its `written_reports/PLAN.md`. Requirement ids (`R`, `S`,
-`OUT`, `N`) are in REQUIREMENTS.md.
+dictionary service's own decisions are `D<n>`, in its `docs/REQUIREMENTS.md`. Requirement ids (`R`, `S`,
+`N`, and out-of-scope `X101` up) are in REQUIREMENTS.md.
 
 ## Coming back after a while
 
@@ -26,7 +26,7 @@ dictionary service's own decisions are `D<n>`, in its `written_reports/PLAN.md`.
 2. `git status` and `git pull` here and in `../japanese-dictionary-services`. Cross-repo work is
    tracked under shared `X<n>` ids.
 3. Find the requirement you are working on in the services repo's
-   [`written_reports/REQUIREMENTS.md`](../japanese-dictionary-services/written_reports/REQUIREMENTS.md)
+   [`docs/REQUIREMENTS.md`](../japanese-dictionary-services/docs/REQUIREMENTS.md)
    (updater rows: R12–R15): its spoke, status and acceptance criterion.
 4. Start the stack (next section). For how things work, read [`docs/CONTEXT.md`](docs/CONTEXT.md).
 
